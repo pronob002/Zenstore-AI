@@ -3,8 +3,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from database import get_db, Base, engine
 import models
-from security import create_access_token, password_hash, verify_password
+from security import create_access_token, password_hash, verify_password,get_current_user
 from pydantic import BaseModel
+
+import schemas
+from services import ProductService
+
 
 
 
@@ -49,4 +53,27 @@ def login(form_data:OAuth2PasswordRequestForm=Depends(),db:Session=Depends(get_d
     access_token=create_access_token(data={"sub":str(user.id)})
     return {"access_token":access_token,"token_type":"bearer"}
     
+    
+    # --- PRODUCT ROUTES ---
+
+@app.post("/products", response_model=schemas.ProductResponse, status_code=status.HTTP_201_CREATED)
+def create_product(
+    product: schemas.ProductCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user) 
+):
+    product_service = ProductService(db)
+    new_product = product_service.create_product(product, current_user.id)
+    return new_product
+
+
+@app.get("/products", response_model=list[schemas.ProductResponse])
+def get_products(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user) 
+):
+    product_service = ProductService(db)
+    user_products = product_service.get_user_products(current_user.id)
+    
+    return user_products
     

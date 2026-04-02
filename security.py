@@ -41,7 +41,7 @@ def create_access_token(data:dict)->str:
 
 token_schema=OAuth2PasswordBearer(tokenUrl="/login")
 
-def get_current_user(token:Depends(token_schema),db:Session=Depends(get_db)):
+def get_current_user(token:str=Depends(token_schema),db:Session=Depends(get_db)):
     credential_exception=HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
