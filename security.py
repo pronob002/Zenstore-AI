@@ -9,7 +9,7 @@ SECRET_KEY=os.getenv("SECRET_KEY", "abc123@#$%^&*()")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+#pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def password_hash(password:str)->str:
     pwd_bytes=password.encode("utf-8")
