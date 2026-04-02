@@ -3,14 +3,14 @@ from sqlalchemy.orm import relationship
 from database import Base
 
 class User(Base):
-    _tablename_="users"
+    __tablename__="users"
     id = Column(Integer,primary_key=True,index=True)
     username=Column(String, unique=True,index=True,nullable=False)
     password_hash=Column(String,nullable=False)
     products=relationship("Product", back_populates="owner")
 
 class Product(Base):
-    _tablename_="products"
+    __tablename__="products"
     id=Column(Integer,primary_key=True,index=True)
     name=Column(String, index=True, nullable=False)
     description=Column(String, nullable=True)
