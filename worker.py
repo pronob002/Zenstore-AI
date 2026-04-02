@@ -7,8 +7,8 @@ from groq import Groq
 from database import SessionLocal
 import models
 
-
-
+import redis
+redis_client = redis.Redis(host='localhost', port=6379, db=1, decode_responses=True)
 celery_app = Celery(
     "zenstore_worker",
     broker=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
@@ -62,6 +62,9 @@ def process_product_ai(product_id: int, product_name: str):
                 product.status = "completed"
                 db.commit()
                 print(f"Product {product_id} processed successfully.")
+                cache_key = f"products_user_{product.user_id}"
+                redis_client.delete(cache_key)
+                print(f"Cleared cache for user {product.user_id}")
             else:
                 print(f"Product {product_id} not found.")
 
