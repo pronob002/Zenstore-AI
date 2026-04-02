@@ -14,7 +14,7 @@ class Product(Base):
     id=Column(Integer,primary_key=True,index=True)
     name=Column(String, index=True, nullable=False)
     description=Column(String, nullable=True)
-    category=Column(String, nullable=False)
+    category=Column(String, nullable=True)
     #status can be 'pending','processing','completed','failed'
     status=Column(String, default='pending')
     user_id=Column(Integer, ForeignKey("users.id"))
