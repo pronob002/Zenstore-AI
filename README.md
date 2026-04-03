@@ -103,7 +103,7 @@ Open a new terminal and follow these exact commands to build the React applicati
 
 3. **Install core UI/Routing packages:**
    ```bash
-   npm install axios react-router-dom lucide-react
+   npm install axios react-router-dom lucide-react recharts
    ```
 
 4. **Install Tailwind CSS and its peer dependencies:**
