@@ -11,6 +11,9 @@ ZenStore AI is a full-stack, AI-powered product catalog management system. It al
 - **API Documentation:** Auto-generated Swagger UI.
 
 ---
+## 🎥 Project Demonstration
+Watch a full walkthrough of the application, including the real-time background AI processing and UI, here:  
+👉 **[Watch the Live Demo on YouTube](https://youtu.be/Igkvyp_BQxQ)**
 
 ## 🛠️ Technical Constraints Addressed (Challenge Requirements)
 1. **Object-Oriented Programming (OOP):** Core business logic is encapsulated in the `ProductService` class (`services.py`).
