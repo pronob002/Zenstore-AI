@@ -7,7 +7,7 @@ import csv
 from io import StringIO
 import redis
 import json
-
+from fastapi.middleware.cors import CORSMiddleware
 from database import get_db, Base, engine
 import models
 import schemas
@@ -25,6 +25,29 @@ app = FastAPI(
     description="API for managing products with AI generated descriptions",
     version="1.0.0"
 )
+
+#middlewares code
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class UserCreate(BaseModel):
