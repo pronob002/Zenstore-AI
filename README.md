@@ -22,6 +22,12 @@ Watch a full walkthrough of the application, including the real-time background 
 4. **Caching Layer:** Redis caches user product lists and is invalidated upon new AI processing.
 
 ---
+### 📊 Category Statistics
+![Category Statistics](images/stat.png)
+
+### 📄 Pagination
+![Pagination](images/pagination.png)
+
 
 ## 🚀 Setup & Installation Instructions
 
