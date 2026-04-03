@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UploadCloud, Plus, LogOut, PackageSearch, Layers, Cpu, BarChart3, CheckCircle2, Clock } from 'lucide-react';
+import { UploadCloud, Plus, LogOut, PackageSearch, Layers, Cpu, BarChart3, CheckCircle2, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import api from '../services/api';
 import LiveLogs from '../components/LiveLogs';
 import RecentLogs from '../components/RecentLogs';
@@ -10,6 +11,11 @@ export default function Dashboard() {
     const [logs, setLogs] = useState([]);
     const [newProduct, setNewProduct] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     const fileInputRef = useRef(null);
     const navigate = useNavigate();
 
@@ -68,16 +74,34 @@ export default function Dashboard() {
         fetchLogs();
     };
 
-    // --- STATISTICS CALCULATIONS ---
+    // --- STATISTICS & GRAPH DATA ---
     const totalProducts = products.length;
     const completedProducts = products.filter(p => p.status === 'completed').length;
-    const processingProducts = totalProducts - completedProducts;
     
     const categoryStats = products.reduce((acc, p) => {
         const cat = p.category || 'Processing...';
         acc[cat] = (acc[cat] || 0) + 1;
         return acc;
     }, {});
+
+    // Convert stats object to array for the Recharts graph
+    const chartData = Object.entries(categoryStats).map(([name, count]) => ({
+        name: name.length > 12 ? name.substring(0, 12) + '...' : name, // Truncate long names for chart
+        count
+    })).sort((a, b) => b.count - a.count); // Sort highest to lowest
+
+    // --- PAGINATION LOGIC ---
+    const totalPages = Math.ceil(products.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
+
+    // Make sure we don't get stuck on an empty page if items are deleted
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [products.length, currentPage, totalPages]);
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
@@ -148,49 +172,66 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Middle Row: Analytics & Statistics */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-                        <div className="bg-blue-100 p-3 rounded-full text-blue-600"><BarChart3 size={24} /></div>
-                        <div>
-                            <p className="text-sm text-slate-500 font-medium">Total Products</p>
-                            <h4 className="text-2xl font-bold text-slate-800">{totalProducts}</h4>
+                {/* Middle Row: Analytics & Visual Graph */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Stat Cards */}
+                    <div className="flex flex-col gap-6">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4 flex-1">
+                            <div className="bg-blue-100 p-4 rounded-full text-blue-600"><BarChart3 size={28} /></div>
+                            <div>
+                                <p className="text-sm text-slate-500 font-medium">Total Products</p>
+                                <h4 className="text-3xl font-bold text-slate-800">{totalProducts}</h4>
+                            </div>
                         </div>
-                    </div>
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-                        <div className="bg-emerald-100 p-3 rounded-full text-emerald-600"><CheckCircle2 size={24} /></div>
-                        <div>
-                            <p className="text-sm text-slate-500 font-medium">AI Completed</p>
-                            <h4 className="text-2xl font-bold text-slate-800">{completedProducts}</h4>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4 flex-1">
+                            <div className="bg-emerald-100 p-4 rounded-full text-emerald-600"><CheckCircle2 size={28} /></div>
+                            <div>
+                                <p className="text-sm text-slate-500 font-medium">AI Completed</p>
+                                <h4 className="text-3xl font-bold text-slate-800">{completedProducts}</h4>
+                            </div>
                         </div>
                     </div>
                     
-                    {/* Category Breakdown */}
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 md:col-span-2 flex flex-col justify-center">
-                        <p className="text-sm text-slate-500 font-medium mb-2">Category Breakdown</p>
-                        <div className="flex flex-wrap gap-2">
-                            {Object.entries(categoryStats).length === 0 ? (
-                                <span className="text-sm text-slate-400 italic">No categories yet</span>
+                    {/* Visual Category Graph */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
+                        <p className="text-sm text-slate-500 font-bold mb-4 uppercase tracking-wider">Category Distribution</p>
+                        <div className="h-48 w-full">
+                            {chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                                        <XAxis dataKey="name" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                                        <YAxis allowDecimals={false} tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                                        <Tooltip 
+                                            cursor={{fill: '#f1f5f9'}}
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Bar dataKey="count" radius={[6, 6, 6, 6]}>
+                                            {chartData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.name === 'Processing...' ? '#fbbf24' : '#3b82f6'} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
                             ) : (
-                                Object.entries(categoryStats).map(([cat, count]) => (
-                                    <div key={cat} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-lg text-sm">
-                                        <span className={`font-semibold ${cat === 'Processing...' ? 'text-amber-500 animate-pulse' : 'text-slate-700'}`}>{cat}</span>
-                                        <span className="bg-white text-slate-500 px-1.5 rounded-md text-xs font-bold border border-slate-200">{count}</span>
-                                    </div>
-                                ))
+                                <div className="h-full flex items-center justify-center text-slate-400 italic">No data to display</div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* Bottom Row: The Table (With Full Descriptions) */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-5 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
-                        <PackageSearch size={20} className="text-slate-500" />
-                        <h2 className="text-lg font-bold text-slate-800">Product Database</h2>
+                {/* Bottom Row: The Table with Pagination */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                    <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <div className="flex items-center gap-2">
+                            <PackageSearch size={20} className="text-slate-500" />
+                            <h2 className="text-lg font-bold text-slate-800">Product Database</h2>
+                        </div>
+                        <span className="text-sm font-medium text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
+                            {totalProducts} Items
+                        </span>
                     </div>
                     
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto flex-1">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
@@ -200,7 +241,7 @@ export default function Dashboard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {products.map((p) => (
+                                {currentProducts.map((p) => (
                                     <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 align-top">
                                             <div className="font-bold text-slate-800 text-sm">{p.name}</div>
@@ -209,7 +250,6 @@ export default function Dashboard() {
                                             </div>
                                         </td>
                                         
-                                        {/* REMOVED line-clamp-2 so the full description shows! */}
                                         <td className="px-6 py-4 text-sm text-slate-700 align-top">
                                             <p className="leading-relaxed whitespace-pre-wrap">
                                                 {p.description || (
@@ -235,16 +275,41 @@ export default function Dashboard() {
                                         </td>
                                     </tr>
                                 ))}
-                                {products.length === 0 && (
+                                {currentProducts.length === 0 && (
                                     <tr>
-                                        <td colSpan="3" className="text-center py-12">
-                                            <p className="text-slate-500 text-sm">No products found in the database.</p>
+                                        <td colSpan="3" className="text-center py-16">
+                                            <p className="text-slate-500 text-sm">No products found. Upload a CSV to get started.</p>
                                         </td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="p-4 border-t border-slate-100 bg-white flex items-center justify-between">
+                            <button 
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentPage === 1 ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-100 border border-slate-200'}`}
+                            >
+                                <ChevronLeft size={16}/> Previous
+                            </button>
+                            
+                            <span className="text-sm font-medium text-slate-500">
+                                Page <span className="font-bold text-slate-800">{currentPage}</span> of {totalPages}
+                            </span>
+                            
+                            <button 
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentPage === totalPages ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-100 border border-slate-200'}`}
+                            >
+                                Next <ChevronRight size={16}/>
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Raw Terminal */}
