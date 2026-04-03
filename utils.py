@@ -1,10 +1,20 @@
 import time
 import logging
 from functools import wraps
-
+import redis
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger=logging.getLogger(__name__)
+
+redis_client = redis.Redis(host='localhost', port=6379, db=1, decode_responses=True)
+
+def log_to_redis(message: str):
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    log_entry = f"[{timestamp}] {message}"
+    redis_client.lpush('app_logs', log_entry)
+    redis_client.ltrim('app_logs', 0, 49) 
+    logger.info(log_entry)
 
 def time_it(func):
     @wraps(func)

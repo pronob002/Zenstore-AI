@@ -6,7 +6,7 @@ from groq import Groq
 
 from database import SessionLocal
 import models
-
+from utils import log_to_redis
 import redis
 redis_client = redis.Redis(host='localhost', port=6379, db=1, decode_responses=True)
 celery_app = Celery(
@@ -50,6 +50,7 @@ def process_product_ai(product_id: int, product_name: str):
         category = ai_data.get("category", "General")
 
         print(f"Simulating image processing for {product_name}...")
+        log_to_redis(f"Celery: Starting AI generation for '{product_name}'...")
         time.sleep(3)
 
         db = SessionLocal()
@@ -62,6 +63,7 @@ def process_product_ai(product_id: int, product_name: str):
                 product.status = "completed"
                 db.commit()
                 print(f"Product {product_id} processed successfully.")
+                log_to_redis(f"Celery: Product {product_id} processed successfully!")
                 cache_key = f"products_user_{product.user_id}"
                 redis_client.delete(cache_key)
                 print(f"Cleared cache for user {product.user_id}")
@@ -77,3 +79,4 @@ def process_product_ai(product_id: int, product_name: str):
 
     except Exception as e:
         print(f"AI processing error for product {product_id}: {str(e)}")
+        

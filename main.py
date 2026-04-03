@@ -14,7 +14,7 @@ import schemas
 from security import create_access_token, password_hash, verify_password, get_current_user
 from services import ProductService
 from worker import process_product_ai
-
+from utils import log_to_redis
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -118,9 +118,11 @@ def get_products(
     cached_data = redis_client.get(cache_key)
     if cached_data:
         print("Fetching from Redis Cache...")
+        log_to_redis(f"Cache Hit: Fetching {current_user.username}'s products from Redis")
         return json.loads(cached_data)
         
     print("Fetching from Database...")
+    log_to_redis(f"Cache Miss: Fetching {current_user.username}'s products from Database")
     product_service = ProductService(db)
     user_products = product_service.get_user_products(current_user.id)
 
@@ -171,3 +173,9 @@ async def upload_batch_products(
     redis_client.delete(cache_key)
         
     return {"message": f"Successfully queued {count} products for background AI processing."}
+
+
+@app.get("/logs")
+def get_system_logs():
+    logs = redis_client.lrange('app_logs', 0, -1)
+    return {"logs": logs}
