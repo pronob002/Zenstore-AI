@@ -125,6 +125,7 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 REDIS_URL=redis://localhost:6379/0
 GROQ_API_KEY=your_groq_api_key_here
+```
 
 ## 🛑 Troubleshooting & Development Notes
 
