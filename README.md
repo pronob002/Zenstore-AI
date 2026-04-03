@@ -112,6 +112,19 @@ Open a new terminal and follow these exact commands to build the React applicati
    *The frontend is now running at `http://localhost:5173`*
 
 ---
+---
+
+## 🔐 Environment Variables (.env.example)
+
+To run the project locally, create a file named `.env` in the root directory of the project and copy the following variables into it. Replace the `GROQ_API_KEY` placeholder with your actual API key.
+
+```env
+DATABASE_URL=sqlite:///./zenstore.db
+SECRET_KEY=your_super_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+REDIS_URL=redis://localhost:6379/0
+GROQ_API_KEY=your_groq_api_key_here
 
 ## 🛑 Troubleshooting & Development Notes
 
