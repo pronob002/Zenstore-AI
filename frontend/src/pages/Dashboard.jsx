@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UploadCloud, Plus, LogOut, PackageSearch, Layers, Cpu } from 'lucide-react';
+import { UploadCloud, Plus, LogOut, PackageSearch, Layers, Cpu, BarChart3, CheckCircle2, Clock } from 'lucide-react';
 import api from '../services/api';
 import LiveLogs from '../components/LiveLogs';
 import RecentLogs from '../components/RecentLogs';
@@ -68,6 +68,17 @@ export default function Dashboard() {
         fetchLogs();
     };
 
+    // --- STATISTICS CALCULATIONS ---
+    const totalProducts = products.length;
+    const completedProducts = products.filter(p => p.status === 'completed').length;
+    const processingProducts = totalProducts - completedProducts;
+    
+    const categoryStats = products.reduce((acc, p) => {
+        const cat = p.category || 'Processing...';
+        acc[cat] = (acc[cat] || 0) + 1;
+        return acc;
+    }, {});
+
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
             <nav className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
@@ -92,13 +103,15 @@ export default function Dashboard() {
             </nav>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+                
+                {/* Top Row: Actions & Recent Logs */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
                             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
                                 <Plus size={16} className="text-blue-500"/> Add Product
                             </h3>
-                            <form onSubmit={handleAddProduct} className="flex flex-col gap-3">
+                            <form onSubmit={handleAddProduct} className="flex flex-col gap-3 mt-auto">
                                 <input 
                                     type="text" placeholder="e.g. Mechanical Keyboard" required
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
@@ -115,7 +128,7 @@ export default function Dashboard() {
                                 <UploadCloud size={16} className="text-indigo-500"/> Batch CSV
                             </h3>
                             <div 
-                                className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer group flex flex-col items-center justify-center h-full"
+                                className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer group flex flex-col items-center justify-center h-full min-h-[110px]"
                                 onClick={() => fileInputRef.current.click()}
                             >
                                 <UploadCloud className="text-slate-400 group-hover:text-blue-500 transition-colors mb-2" size={28} />
@@ -130,11 +143,47 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="md:col-span-1">
+                    <div className="md:col-span-1 h-full">
                         <RecentLogs logs={logs} />
                     </div>
                 </div>
 
+                {/* Middle Row: Analytics & Statistics */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+                        <div className="bg-blue-100 p-3 rounded-full text-blue-600"><BarChart3 size={24} /></div>
+                        <div>
+                            <p className="text-sm text-slate-500 font-medium">Total Products</p>
+                            <h4 className="text-2xl font-bold text-slate-800">{totalProducts}</h4>
+                        </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+                        <div className="bg-emerald-100 p-3 rounded-full text-emerald-600"><CheckCircle2 size={24} /></div>
+                        <div>
+                            <p className="text-sm text-slate-500 font-medium">AI Completed</p>
+                            <h4 className="text-2xl font-bold text-slate-800">{completedProducts}</h4>
+                        </div>
+                    </div>
+                    
+                    {/* Category Breakdown */}
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 md:col-span-2 flex flex-col justify-center">
+                        <p className="text-sm text-slate-500 font-medium mb-2">Category Breakdown</p>
+                        <div className="flex flex-wrap gap-2">
+                            {Object.entries(categoryStats).length === 0 ? (
+                                <span className="text-sm text-slate-400 italic">No categories yet</span>
+                            ) : (
+                                Object.entries(categoryStats).map(([cat, count]) => (
+                                    <div key={cat} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-lg text-sm">
+                                        <span className={`font-semibold ${cat === 'Processing...' ? 'text-amber-500 animate-pulse' : 'text-slate-700'}`}>{cat}</span>
+                                        <span className="bg-white text-slate-500 px-1.5 rounded-md text-xs font-bold border border-slate-200">{count}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bottom Row: The Table (With Full Descriptions) */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="p-5 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
                         <PackageSearch size={20} className="text-slate-500" />
@@ -145,9 +194,9 @@ export default function Dashboard() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
-                                    <th className="px-6 py-4 font-semibold">Name & Category</th>
-                                    <th className="px-6 py-4 font-semibold w-1/2">Generated Description</th>
-                                    <th className="px-6 py-4 font-semibold text-right">Processing Status</th>
+                                    <th className="px-6 py-4 font-semibold w-1/4">Name & Category</th>
+                                    <th className="px-6 py-4 font-semibold w-2/4">Generated Description</th>
+                                    <th className="px-6 py-4 font-semibold text-right w-1/4">Processing Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -155,27 +204,33 @@ export default function Dashboard() {
                                     <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 align-top">
                                             <div className="font-bold text-slate-800 text-sm">{p.name}</div>
-                                            <div className="text-xs font-semibold text-blue-600 mt-1 bg-blue-50 inline-block px-2 py-0.5 rounded border border-blue-100">
+                                            <div className="text-xs font-semibold text-blue-600 mt-2 bg-blue-50 inline-block px-2 py-1 rounded border border-blue-100">
                                                 {p.category || 'Pending...'}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-600 align-top">
-                                            <p className="line-clamp-2 leading-relaxed">
+                                        
+                                        {/* REMOVED line-clamp-2 so the full description shows! */}
+                                        <td className="px-6 py-4 text-sm text-slate-700 align-top">
+                                            <p className="leading-relaxed whitespace-pre-wrap">
                                                 {p.description || (
                                                     <span className="text-slate-400 italic flex items-center gap-2">
-                                                        <Cpu size={14} className="animate-pulse" /> Processing data...
+                                                        <Cpu size={14} className="animate-pulse" /> Processing AI data...
                                                     </span>
                                                 )}
                                             </p>
                                         </td>
+
                                         <td className="px-6 py-4 align-top text-right">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
                                                 p.status === 'completed' 
                                                     ? 'bg-emerald-100 text-emerald-700' 
                                                     : 'bg-amber-100 text-amber-700 animate-pulse'
                                             }`}>
-                                                {/* THIS IS WHERE THE TEXT CHANGES TO "COMPLETED" */}
-                                                {p.status === 'completed' ? 'COMPLETED' : 'PROCESSING'}
+                                                {p.status === 'completed' ? (
+                                                    <><CheckCircle2 size={14}/> COMPLETED</>
+                                                ) : (
+                                                    <><Clock size={14}/> PROCESSING</>
+                                                )}
                                             </span>
                                         </td>
                                     </tr>
@@ -192,6 +247,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* Raw Terminal */}
                 <div className="mt-8">
                     <LiveLogs logs={logs} />
                 </div>
