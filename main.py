@@ -91,7 +91,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 # --- PRODUCT ROUTES ---
 
-@app.post("/products", response_model=schemas.ProductResponse, status_code=status.HTTP_201_CREATED)
+@app.post("/OneProductCreate", response_model=schemas.ProductResponse, status_code=status.HTTP_201_CREATED)
 def create_product(
     product: schemas.ProductCreate,
     db: Session = Depends(get_db),
