@@ -53,7 +53,7 @@ export default function Dashboard() {
     const handleAddProduct = async (e) => {
         e.preventDefault();
         if(!newProduct.trim()) return;
-        await api.post('/products', { name: newProduct });
+        await api.post('/OneProductCreate', { name: newProduct });
         setNewProduct('');
         fetchProducts();
         fetchLogs();
